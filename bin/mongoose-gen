@@ -3,24 +3,24 @@
 /**
  * Module dependencies
  */
-var program  = require('commander');
-var readline = require('readline');
-var async    = require('async');
-var generators = require('../lib/generators');
-var cliStyles = require('../lib/cliStyles');
+const program = require('commander');
+const readline = require('readline');
+const async = require('async');
+const generators = require('../lib/generators');
+const cliStyles = require('../lib/cliStyles');
 
-var pkg = require('../package.json');
-var version = pkg.version;
+const pkg = require('../package.json');
+const version = pkg.version;
 
-var rl = readline.createInterface({
-    input : process.stdin,
+const rl = readline.createInterface({
+    input: process.stdin,
     output: process.stdout
 });
 
-var ALLOWED_FIELDS_TYPES = ['string', 'number', 'date', 'boolean', 'array', 'objectId'];
-var ALLOWED_REST_ARGUMENT = {'YES': 'yes', 'NO': 'no'};
-var ALLOWED_FILE_TREE_ARGUMENT = {'TYPE': 't', 'MODULE': 'm'};
-var CLI_PHRASES = {
+const ALLOWED_FIELDS_TYPES = ['string', 'number', 'date', 'boolean', 'array', 'objectId'];
+const ALLOWED_REST_ARGUMENT = { 'YES': 'yes', 'NO': 'no' };
+const ALLOWED_FILE_TREE_ARGUMENT = { 'TYPE': 't', 'MODULE': 'm' };
+const CLI_PHRASES = {
     AVAILABLE_TYPE: 'Available types : string, number, date, boolean, array, objectId',
     QUESTION_MODEL_NAME: 'Model Name : ',
     QUESTION_FIELD_NAME: 'Field Name (press <return> to stop adding fields) : ',
@@ -47,12 +47,11 @@ program
     .option('-r, --rest', 'enable generation REST')
     .option('-t, --tree <tree>', 'files tree generation grouped by <t>ype or by <m>odule')
     .option('--ts', 'Generating code in TS')
-    .parse(process.argv)
-;
+    .parse(process.argv);
 
 // Main program
-(function (path) {
-    var ts = !!(program.ts);
+((path) => {
+    let ts = !!(program.ts);
 
     if (program.model || program.fields) {
         runNonInteractiveMode(path, ts);
@@ -66,27 +65,27 @@ program
  * @param {string} path destination path
  * @param {boolean} ts generating code in TS
  */
-function runInteractiveMode (path, ts) {
+function runInteractiveMode(path, ts) {
     async.series({
-            name: function (cb) {
-                askQuestion(CLI_PHRASES.QUESTION_MODEL_NAME, isModelNameParamValid, function (name) {
+            name: (cb) => {
+                askQuestion(CLI_PHRASES.QUESTION_MODEL_NAME, isModelNameParamValid, function(name) {
                     console.log(cliStyles.green + CLI_PHRASES.AVAILABLE_TYPE + cliStyles.reset);
                     cb(null, name);
                 });
             },
-            fields: function (cb) {
-                var exit   = false;
+            fields: (cb) => {
+                var exit = false;
                 var fields = [];
                 var currentField = {};
 
                 async.whilst(
-                    function () { return !exit; },
-                    function (cb) {
+                    () => { return !exit; },
+                    (cb) => {
                         async.series({
-                                name: function (cb) {
+                                name: (cb) => {
                                     askQuestion(CLI_PHRASES.QUESTION_FIELD_NAME,
                                         null,
-                                        function (fieldName) {
+                                        (fieldName) => {
                                             if (fieldName.trim().length === 0) {
                                                 exit = true;
                                             }
@@ -94,20 +93,20 @@ function runInteractiveMode (path, ts) {
                                         }
                                     );
                                 },
-                                type: function (cb) {
+                                type: (cb) => {
                                     askQuestion(CLI_PHRASES.QUESTION_FIELD_TYPE, isFieldTypeParamValid,
-                                        function (fieldType) {
+                                        (fieldType) => {
                                             currentField.type = (fieldType.trim().length === 0) ? 'string' : fieldType;
                                             cb(null, currentField.type);
                                         }
                                     );
                                 },
-                                reference: function (cb) {
+                                reference: (cb) => {
                                     if (currentField.type === 'objectId') {
-                                        askQuestion(CLI_PHRASES.QUESTION_FIELD_REF, null, function (referenceName) {
+                                        askQuestion(CLI_PHRASES.QUESTION_FIELD_REF, null, (referenceName) => {
                                             referenceName = (referenceName.trim().length === 0) ?
-                                                'INSERT_YOUR_REFERENCE_NAME_HERE'
-                                                : referenceName;
+                                                'INSERT_YOUR_REFERENCE_NAME_HERE' :
+                                                referenceName;
                                             cb(null, referenceName);
                                         });
                                     } else {
@@ -115,49 +114,49 @@ function runInteractiveMode (path, ts) {
                                     }
                                 }
                             },
-                            function (err, results) {
+                            (err, results) => {
                                 if (!err) {
                                     fields.push(results);
                                 }
                                 cb();
                             });
                     },
-                    function (err, results) {
+                    (err, results) => {
                         cb(null, fields);
                     });
             },
-            rest: function (cb) {
-                askQuestion(CLI_PHRASES.QUESTION_GENERATE_REST, isRestParamValid, function (rest) {
+            rest: (cb) => {
+                askQuestion(CLI_PHRASES.QUESTION_GENERATE_REST, isRestParamValid, (rest) => {
                     rest = (rest.trim().length === 0) ? 'yes' : rest;
                     cb(null, rest);
                 });
             },
-            generateMethod: function (cb) {
-                askQuestion(CLI_PHRASES.QUESTION_FILES_TREE, isFileTreeParamValid, function (generateMethod) {
+            generateMethod: (cb) => {
+                askQuestion(CLI_PHRASES.QUESTION_FILES_TREE, isFileTreeParamValid, (generateMethod) => {
                     generateMethod = (generateMethod.trim().length === 0) ? 't' : generateMethod;
                     cb(null, generateMethod);
                 });
             }
         },
-        function (err, results) {
+        (err, results) => {
             if (err) {
                 return closeProgram();
             }
 
             async.parallel([
-                    function (cb) {
+                    (cb) => {
                         generators.generateModel(path, results.name, results.fields, results.generateMethod, ts, cb);
                     },
-                    function (cb) {
+                    (cb) => {
                         if (results.rest !== 'yes') { return cb(); }
-                        generators.generateRouter(path, results.name, results.generateMethod, ts,  cb);
-                    }            ,
-                    function (cb) {
+                        generators.generateRouter(path, results.name, results.generateMethod, ts, cb);
+                    },
+                    (cb) => {
                         if (results.rest !== 'yes') { return cb(); }
                         generators.generateController(path, results.name, results.fields, results.generateMethod, ts, cb);
                     }
                 ],
-                function (err, results) {
+                (err, results) => {
                     closeProgram();
                 }
             );
@@ -175,9 +174,9 @@ function runNonInteractiveMode(path, ts) {
         return closeProgram();
     }
 
-    var modelName = program.model;
-    var modelFields = formatFieldsParamInArray(program.fields);
-    var fileTree = program.tree || ALLOWED_FILE_TREE_ARGUMENT.TYPE;
+    let modelName = program.model;
+    let modelFields = formatFieldsParamInArray(program.fields);
+    let fileTree = program.tree || ALLOWED_FILE_TREE_ARGUMENT.TYPE;
 
     if (!isFileTreeParamValid(fileTree)) {
         return closeProgram();
@@ -186,19 +185,19 @@ function runNonInteractiveMode(path, ts) {
     if (!modelFields) { return closeProgram(); }
 
     async.parallel([
-            function (cb) {
+            (cb) => {
                 generators.generateModel(path, modelName, modelFields, fileTree, ts, cb);
             },
-            function (cb) {
+            (cb) => {
                 if (!program.rest) { return cb(); }
                 generators.generateRouter(path, modelName, fileTree, ts, cb);
             },
-            function (cb) {
+            (cb) => {
                 if (!program.rest) { return cb(); }
                 generators.generateController(path, modelName, modelFields, fileTree, ts, cb);
             }
         ],
-        function (err, results) {
+        (err, results) => {
             closeProgram();
         }
     );
@@ -212,11 +211,11 @@ function runNonInteractiveMode(path, ts) {
  * @param {function} callback callback function
  */
 function askQuestion(question, validate, callback) {
-    rl.question(question, function(answer) {
+    rl.question(question, (answer) => {
         if (validate) {
             if (!validate(answer)) {
                 askQuestion(question, validate, callback);
-                return ;
+                return;
             }
         }
         callback(answer);
@@ -327,16 +326,16 @@ function isFieldValid(fieldName, fieldType) {
  * @returns {Array} fields formatted
  */
 function formatFieldsParamInArray(fields) {
-    var arrayFields = fields.split(',');
-    var result = [];
+    let arrayFields = fields.split(',');
+    let result = [];
 
-    var err = arrayFields.every(function (field) {
-        var f = field.split(':');
+    let err = arrayFields.every((field) => {
+        let f = field.split(':');
 
-        var fieldName = f[0];
-        var fieldType = (f[1] || ALLOWED_FIELDS_TYPES[0]);
-        var fieldRef = '';
-        var isArray = false;
+        let fieldName = f[0];
+        let fieldType = (f[1] || ALLOWED_FIELDS_TYPES[0]);
+        let fieldRef = '';
+        let isArray = false;
 
         if (fieldType === ALLOWED_FIELDS_TYPES[5]) {
             fieldRef = f[2];
