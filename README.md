@@ -1,11 +1,11 @@
-[![Build Status](https://travis-ci.org/DamienP33/express-mongoose-generator.svg?branch=master)](https://travis-ci.org/DamienP33/express-mongoose-generator)
-# express-mongoose-generator
 
-It’s a mongoose model, REST controller and Express router code generator for Express.js 4 application.
+# express-mongoose-gen
+
+It’s a mongoose model, REST controller and Express router code generator for Express.js 4.17.1 application.
 
 ## Installation
 ```bash
-$ npm install -g express-mongoose-generator
+$ npm install -g express-mongoose-gen
 ```
 
 ## How to call and use it
@@ -25,12 +25,12 @@ $ mongoose-gen -m user -f firstName:string,lastName -r
   - `-t, --tree <tree>`        files tree generation grouped by (t)ype or by (m)odule
 
 ##### Types supported in this version include
-  - String
-  - Number
-  - Date
-  - Boolean
-  - Array
-  - ObjectId
+  - string
+  - number
+  - date
+  - boolean
+  - array
+  - objectId
 
 
 ### Input commands from bash
