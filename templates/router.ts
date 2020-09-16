@@ -1,4 +1,3 @@
-
 import * as express from 'express';
 const router = express.Router();
 import * as {controllerName} from {controllerPath};
