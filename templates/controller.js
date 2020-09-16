@@ -1,4 +1,4 @@
-var { modelName } = require({ modelPath });
+const { modelName } = require({ modelPath });
 
 /**
  * {controllerName}.js
@@ -11,7 +11,7 @@ module.exports = {
      * {controllerName}.list()
      */
     list: function(req, res) {
-        { modelName }.find(function(err, { pluralName }) {
+        modelName.find(function(err, { pluralName }) {
             if (err) {
                 return res.status(500).json({
                     message: 'Error when getting {name}.',
@@ -26,7 +26,8 @@ module.exports = {
      * {controllerName}.show()
      */
     show: function(req, res) {
-        var id = req.params.id; { modelName }.findOne({ _id: id }, function(err, { name }) {
+        var id = req.params.id;
+        modelName.findOne({ _id: id }, function(err, { name }) {
             if (err) {
                 return res.status(500).json({
                     message: 'Error when getting {name}.',
