@@ -1,21 +1,26 @@
-const program = require('commander');
-const readline = require('readline');
-const async = require('async');
-const generators = require('../lib/generators');
-const cliStyles = require('../lib/cliStyles');
+#!/usr/bin/env node
 
-const pkg = require('../package.json');
-const version = pkg.version;
+/**
+ * Module dependencies
+ */
+var program  = require('commander');
+var readline = require('readline');
+var async    = require('async');
+var generators = require('../lib/generators');
+var cliStyles = require('../lib/cliStyles');
 
-const rl = readline.createInterface({
-    input: process.stdin,
+var pkg = require('../package.json');
+var version = pkg.version;
+
+var rl = readline.createInterface({
+    input : process.stdin,
     output: process.stdout
 });
 
-const ALLOWED_FIELDS_TYPES = ['string', 'number', 'date', 'boolean', 'array', 'objectId'];
-const ALLOWED_REST_ARGUMENT = { 'YES': 'yes', 'NO': 'no' };
-const ALLOWED_FILE_TREE_ARGUMENT = { 'TYPE': 't', 'MODULE': 'm' };
-const CLI_PHRASES = {
+var ALLOWED_FIELDS_TYPES = ['string', 'number', 'date', 'boolean', 'array', 'objectId'];
+var ALLOWED_REST_ARGUMENT = {'YES': 'yes', 'NO': 'no'};
+var ALLOWED_FILE_TREE_ARGUMENT = {'TYPE': 't', 'MODULE': 'm'};
+var CLI_PHRASES = {
     AVAILABLE_TYPE: 'Available types : string, number, date, boolean, array, objectId',
     QUESTION_MODEL_NAME: 'Model Name : ',
     QUESTION_FIELD_NAME: 'Field Name (press <return> to stop adding fields) : ',
@@ -42,11 +47,12 @@ program
     .option('-r, --rest', 'enable generation REST')
     .option('-t, --tree <tree>', 'files tree generation grouped by <t>ype or by <m>odule')
     .option('--ts', 'Generating code in TS')
-    .parse(process.argv);
+    .parse(process.argv)
+;
 
 // Main program
-((path) => {
-    let ts = !!(program.ts);
+(function (path) {
+    var ts = !!(program.ts);
 
     if (program.model || program.fields) {
         runNonInteractiveMode(path, ts);
@@ -60,27 +66,27 @@ program
  * @param {string} path destination path
  * @param {boolean} ts generating code in TS
  */
-function runInteractiveMode(path, ts) {
+function runInteractiveMode (path, ts) {
     async.series({
-            name: (cb) => {
-                askQuestion(CLI_PHRASES.QUESTION_MODEL_NAME, isModelNameParamValid, function(name) {
+            name: function (cb) {
+                askQuestion(CLI_PHRASES.QUESTION_MODEL_NAME, isModelNameParamValid, function (name) {
                     console.log(cliStyles.green + CLI_PHRASES.AVAILABLE_TYPE + cliStyles.reset);
                     cb(null, name);
                 });
             },
-            fields: (cb) => {
-                var exit = false;
+            fields: function (cb) {
+                var exit   = false;
                 var fields = [];
                 var currentField = {};
 
                 async.whilst(
-                    () => { return !exit; },
-                    (cb) => {
+                    function () { return !exit; },
+                    function (cb) {
                         async.series({
-                                name: (cb) => {
+                                name: function (cb) {
                                     askQuestion(CLI_PHRASES.QUESTION_FIELD_NAME,
                                         null,
-                                        (fieldName) => {
+                                        function (fieldName) {
                                             if (fieldName.trim().length === 0) {
                                                 exit = true;
                                             }
@@ -88,20 +94,20 @@ function runInteractiveMode(path, ts) {
                                         }
                                     );
                                 },
-                                type: (cb) => {
+                                type: function (cb) {
                                     askQuestion(CLI_PHRASES.QUESTION_FIELD_TYPE, isFieldTypeParamValid,
-                                        (fieldType) => {
+                                        function (fieldType) {
                                             currentField.type = (fieldType.trim().length === 0) ? 'string' : fieldType;
                                             cb(null, currentField.type);
                                         }
                                     );
                                 },
-                                reference: (cb) => {
+                                reference: function (cb) {
                                     if (currentField.type === 'objectId') {
-                                        askQuestion(CLI_PHRASES.QUESTION_FIELD_REF, null, (referenceName) => {
+                                        askQuestion(CLI_PHRASES.QUESTION_FIELD_REF, null, function (referenceName) {
                                             referenceName = (referenceName.trim().length === 0) ?
-                                                'INSERT_YOUR_REFERENCE_NAME_HERE' :
-                                                referenceName;
+                                                'INSERT_YOUR_REFERENCE_NAME_HERE'
+                                                : referenceName;
                                             cb(null, referenceName);
                                         });
                                     } else {
@@ -109,49 +115,49 @@ function runInteractiveMode(path, ts) {
                                     }
                                 }
                             },
-                            (err, results) => {
+                            function (err, results) {
                                 if (!err) {
                                     fields.push(results);
                                 }
                                 cb();
                             });
                     },
-                    (err, results) => {
+                    function (err, results) {
                         cb(null, fields);
                     });
             },
-            rest: (cb) => {
-                askQuestion(CLI_PHRASES.QUESTION_GENERATE_REST, isRestParamValid, (rest) => {
+            rest: function (cb) {
+                askQuestion(CLI_PHRASES.QUESTION_GENERATE_REST, isRestParamValid, function (rest) {
                     rest = (rest.trim().length === 0) ? 'yes' : rest;
                     cb(null, rest);
                 });
             },
-            generateMethod: (cb) => {
-                askQuestion(CLI_PHRASES.QUESTION_FILES_TREE, isFileTreeParamValid, (generateMethod) => {
+            generateMethod: function (cb) {
+                askQuestion(CLI_PHRASES.QUESTION_FILES_TREE, isFileTreeParamValid, function (generateMethod) {
                     generateMethod = (generateMethod.trim().length === 0) ? 't' : generateMethod;
                     cb(null, generateMethod);
                 });
             }
         },
-        (err, results) => {
+        function (err, results) {
             if (err) {
                 return closeProgram();
             }
 
             async.parallel([
-                    (cb) => {
+                    function (cb) {
                         generators.generateModel(path, results.name, results.fields, results.generateMethod, ts, cb);
                     },
-                    (cb) => {
+                    function (cb) {
                         if (results.rest !== 'yes') { return cb(); }
-                        generators.generateRouter(path, results.name, results.generateMethod, ts, cb);
-                    },
-                    (cb) => {
+                        generators.generateRouter(path, results.name, results.generateMethod, ts,  cb);
+                    }            ,
+                    function (cb) {
                         if (results.rest !== 'yes') { return cb(); }
                         generators.generateController(path, results.name, results.fields, results.generateMethod, ts, cb);
                     }
                 ],
-                (err, results) => {
+                function (err, results) {
                     closeProgram();
                 }
             );
@@ -169,9 +175,9 @@ function runNonInteractiveMode(path, ts) {
         return closeProgram();
     }
 
-    let modelName = program.model;
-    let modelFields = formatFieldsParamInArray(program.fields);
-    let fileTree = program.tree || ALLOWED_FILE_TREE_ARGUMENT.TYPE;
+    var modelName = program.model;
+    var modelFields = formatFieldsParamInArray(program.fields);
+    var fileTree = program.tree || ALLOWED_FILE_TREE_ARGUMENT.TYPE;
 
     if (!isFileTreeParamValid(fileTree)) {
         return closeProgram();
@@ -180,19 +186,19 @@ function runNonInteractiveMode(path, ts) {
     if (!modelFields) { return closeProgram(); }
 
     async.parallel([
-            (cb) => {
+            function (cb) {
                 generators.generateModel(path, modelName, modelFields, fileTree, ts, cb);
             },
-            (cb) => {
+            function (cb) {
                 if (!program.rest) { return cb(); }
                 generators.generateRouter(path, modelName, fileTree, ts, cb);
             },
-            (cb) => {
+            function (cb) {
                 if (!program.rest) { return cb(); }
                 generators.generateController(path, modelName, modelFields, fileTree, ts, cb);
             }
         ],
-        (err, results) => {
+        function (err, results) {
             closeProgram();
         }
     );
@@ -206,11 +212,11 @@ function runNonInteractiveMode(path, ts) {
  * @param {function} callback callback function
  */
 function askQuestion(question, validate, callback) {
-    rl.question(question, (answer) => {
+    rl.question(question, function(answer) {
         if (validate) {
             if (!validate(answer)) {
                 askQuestion(question, validate, callback);
-                return;
+                return ;
             }
         }
         callback(answer);
@@ -321,16 +327,16 @@ function isFieldValid(fieldName, fieldType) {
  * @returns {Array} fields formatted
  */
 function formatFieldsParamInArray(fields) {
-    let arrayFields = fields.split(',');
-    let result = [];
+    var arrayFields = fields.split(',');
+    var result = [];
 
-    let err = arrayFields.every((field) => {
-        let f = field.split(':');
+    var err = arrayFields.every(function (field) {
+        var f = field.split(':');
 
-        let fieldName = f[0];
-        let fieldType = (f[1] || ALLOWED_FIELDS_TYPES[0]);
-        let fieldRef = '';
-        let isArray = false;
+        var fieldName = f[0];
+        var fieldType = (f[1] || ALLOWED_FIELDS_TYPES[0]);
+        var fieldRef = '';
+        var isArray = false;
 
         if (fieldType === ALLOWED_FIELDS_TYPES[5]) {
             fieldRef = f[2];

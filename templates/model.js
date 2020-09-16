@@ -1,11 +1,6 @@
-const mongoose = require('mongoose');
-const Schema = mongoose.Schema;
-const bcrypt = require("bcryptjs");
-const _ = require("lodash");
-const jwt = require("jsonwebtoken");
+var mongoose = require('mongoose');
+var Schema = mongoose.Schema;
 
-
-
-const { schemaName } = new Schema({ fields });
+var { schemaName } = new Schema({ fields });
 
 module.exports = mongoose.model('{modelName}', { schemaName });
