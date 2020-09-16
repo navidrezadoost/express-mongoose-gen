@@ -1,17 +1,18 @@
-
+[![Build Status](https://travis-ci.org/DamienP33/express-mongoose-generator.svg?branch=master)](https://travis-ci.org/DamienP33/express-mongoose-generator)
 # express-mongoose-gen
 
-It’s a mongoose model, REST controller and Express router code generator for Express.js 4.17.1 application.
+It’s a mongoose model, REST controller and Express router code generator for Express.js 4 application.
 
 ## Installation
 ```bash
 $ npm install -g express-mongoose-gen
 ```
 
-## How to call and use it
+## Usage
+### Non-Interactive mode
 Generates a Mongoose model, a REST controller and Express router :
 ```bash
-$ mongoose-gen -m user -f firstName:string,lastName -r
+$ mongoose-gen -m car -f carDoor:number,color -r
         create: ./models/cardModel.js
         create: ./routes/cardRoutes.js
         create: ./controllers/cardController.js
@@ -19,12 +20,12 @@ $ mongoose-gen -m user -f firstName:string,lastName -r
 
 ##### Options
 
-  - `-m, --model <modelName>` - Enter the heart you want.
-  - `-f, --fields  <fields>` - Enter the names of your fields (firstName:type,lastName:type).
+  - `-m, --model <modelName>` - the model name.
+  - `-f, --fields  <fields>` - the fields (name1:type,name2:type).
   - `-r, --rest` - enable generation REST.
   - `-t, --tree <tree>`        files tree generation grouped by (t)ype or by (m)odule
 
-##### Types supported in this version include
+##### Available types
   - string
   - number
   - date
@@ -32,9 +33,10 @@ $ mongoose-gen -m user -f firstName:string,lastName -r
   - array
   - objectId
 
+### Interactive mode
 
-### Input commands from bash
-```
+Generates a Mongoose model, a REST controller and Express router :
+```bash
 $ mongoose-gen
 Model Name : car
 Available types : string, number, date, boolean, array
@@ -55,44 +57,53 @@ Files tree generation grouped by Type or by Module (t/m) ? [t] :
 
 ## Rendering
 ### Model
-models/userModel.js :
+models/carModel.js :
 ```javascript
-const mongoose = require('mongoose');
-const Schema   = mongoose.Schema;
+var mongoose = require('mongoose');
+var Schema   = mongoose.Schema;
 
-const userSchema = new Schema({
-	"firstName" : String,
-	"lastName" : String,
-    "addResses" : {
+var carSchema = new Schema({
+	"color" : String,
+	"door" : Number,
+    "owner" : {
         type: Schema.Types.ObjectId,
-        ref: 'Address'
+        ref: 'User'
     }
 });
 
-module.exports = mongoose.model('user', userSchema);
+module.exports = mongoose.model('car', carSchema);
 ```
 
-### Route are made this way
-routers/userRoutes.js :
+### Router
+routes/carRoutes.js :
 ```javascript
 var express = require('express');
 var router = express.Router();
 var carController = require('../controllers/carController.js');
 
-
- //GET
+/*
+ * GET
+ */
 router.get('/', carController.list);
 
-//GET
+/*
+ * GET
+ */
 router.get('/:id', carController.show);
 
-//POST
+/*
+ * POST
+ */
 router.post('/', carController.create);
 
-//PUT
+/*
+ * PUT
+ */
 router.put('/:id', carController.update);
 
-//DELETE
+/*
+ * DELETE
+ */
 router.delete('/:id', carController.remove);
 
 module.exports = router;
@@ -244,5 +255,7 @@ app.use('/cars', cars);
  
 ```
 
+## Licence
 
-Copyright (c) 2020 Navid rezadoost
+Copyright (c) 2017 Damien Perrier
+Licensed under the [MIT license](LICENSE).
