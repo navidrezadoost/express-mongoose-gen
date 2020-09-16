@@ -1,8 +1,8 @@
 {
     "name": "express-mongoose-generator",
-    "version": "3.0.3",
+    "version": "1.0.19",
     "description": "It’s a mongoose model, REST controller and Express router code generator for Express.js 4 application",
-    "author": "Damien Perrier <damienperrier33@gmail.com>",
+    "author": "Navid rezadoost <navidrezadoost07@gmail.com>",
     "contributors": [
         "romuloctba"
     ],
@@ -15,11 +15,13 @@
         "restfull",
         "api",
         "app",
-        "web"
+        "web",
+        "navid",
+        "navidrezadoost"
     ],
     "repository": {
         "type": "git",
-        "url": "https://github.com/DamienP33/express-mongoose-generator"
+        "url": "https://github.com/navidrezadoost/ExpressGenerator.git"
     },
     "main": "bin/mongoose-gen",
     "scripts": {
