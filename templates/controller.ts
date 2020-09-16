@@ -1,3 +1,4 @@
+import { findByIdAndRemove } from "./model";
 import {modelName} from {modelPath};
 
 /**
