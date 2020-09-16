@@ -1,7 +1,7 @@
 {
-    "name": "express-mongoose-generator",
-    "version": "1.0.19",
-    "description": "It’s a mongoose model, REST controller and Express router code generator for Express.js 4 application",
+    "name": "express-mongoose-gen",
+    "version": "1.0.20",
+    "description": "It’s a mongoose model, REST controller and Express router code generator for Express.js 4.0.17 application",
     "author": "Navid rezadoost <navidrezadoost07@gmail.com>",
     "contributors": [
         "romuloctba"
