@@ -1,6 +1,6 @@
 var assert = require('assert');
-var spawn  = require('child_process').spawn;
-var path   = require('path');
+var spawn = require('child_process').spawn;
+var path = require('path');
 var mkdirp = require('mkdirp');
 var rimraf = require('rimraf');
 var nexpect = require('nexpect');
@@ -8,53 +8,46 @@ var nexpect = require('nexpect');
 var binPath = path.resolve(__dirname, '../bin/mongoose-gen');
 var tempDir = path.resolve(__dirname, '../temp');
 
-var CLI_PHRASES = {
-    AVAILABLE_TYPE: 'Available types : string, number, date, boolean, array, objectId',
-    QUESTION_MODEL_NAME: 'Model Name : ',
-    QUESTION_FIELD_NAME: 'Field Name (press <return> to stop adding fields) : ',
-    QUESTION_FIELD_TYPE: 'Field Type [string] : ',
-    QUESTION_FIELD_REF: 'Reference (model name referred by the objectId field) : ',
-    QUESTION_GENERATE_REST: 'Generate Rest (yes/no) ? [yes] : ',
-    QUESTION_FILES_TREE: 'Files tree generation grouped by Type or by Module (t/m) ? [t] : ',
-    ERROR_MODEL_NAME: 'Argument required : Model name',
-    ERROR_TYPE_ARGUMENT: 'Invalid Argument : Field type is not allowed',
-    ERROR_REST_ARGUMENT: 'Argument invalid : rest',
-    ERROR_FILES_TREE_ARGUMENT: 'Argument invalid : file tree generation',
-    ERROR_FIELD_REQUIRED: 'Argument required : fields',
-    ERROR_FIELD_NAME_REQUIRED: 'Argument required : Field Name',
-    ERROR_FIELD_TYPE_REQUIRED: 'Argument required : Field type',
-    ERROR_FIELD_TYPE_INVALID: 'Invalid Argument : Field type is not allowed'
+var cliPhrases = {
+    availableType: 'Available types : string, number, date, boolean, array, objectId',
+    questionModelName: 'Model Name : ',
+    questionFieldName: 'Field Name (press <return> to stop adding fields) : ',
+    questionFieldType: 'Field Type [string] : ',
+    questionGenerateRest: 'Generate Rest (yes/no) ? [yes] : ',
+    errorModelName: 'Argument required : Model name',
+    errorTypeArgument: 'Invalid Argument : Field type is not allowed',
+    errorRestArgument: 'Argument invalid : rest'
 };
 
-describe('mongoose-gen', function () {
-    describe('Non-interactive mode', function () {
-        describe('Error execution', function () {
-            it('Require model arg, should print error', function (done) {
-                run('', ['-f', 'foo'], function (err, stdout) {
+describe('mongoose-gen', function() {
+    describe('Non-interactive mode', function() {
+        describe('Error execution', function() {
+            it('Require model arg, should print error', function(done) {
+                run('', ['-f', 'foo'], function(err, stdout) {
                     assert.ok(/Argument required : Model name/.test(stdout));
                     done();
                 });
             });
-            it('Require field arg, should print error', function (done) {
-                run('', ['-m', 'foo'], function (err, stdout) {
+            it('Require field arg, should print error', function(done) {
+                run('', ['-m', 'foo'], function(err, stdout) {
                     assert.ok(/Argument required : fields/.test(stdout));
                     done();
                 });
             });
             it('Field type is not allowed, should print error', function(done) {
-                run('', ['-m', 'foo', '-f', 'foo:str'], function (err, stdout) {
+                run('', ['-m', 'foo', '-f', 'foo:str'], function(err, stdout) {
                     assert.ok(/Invalid Argument : Field type is not allowed/.test(stdout));
                     done();
                 });
             });
         });
 
-        describe('Normal execution', function () {
-            describe('Basic usage', function () {
+        describe('Normal execution', function() {
+            describe('Basic usage', function() {
                 var dir;
 
-                before(function (done) {
-                    createEnvironment(function (err, newDir) {
+                before(function(done) {
+                    createEnvironment(function(err, newDir) {
                         if (err) { return done(err); }
                         dir = newDir;
                         done();
@@ -65,8 +58,8 @@ describe('mongoose-gen', function () {
                     cleanup(dir, done);
                 });
 
-                it('Should have mongoose model file', function (done) {
-                    run(dir, ['-m', 'modelName', '-f', 'fieldName:number'], function (err, stdout) {
+                it('Should have mongoose model file', function(done) {
+                    run(dir, ['-m', 'modelName', '-f', 'fieldName:number'], function(err, stdout) {
                         if (err) { return done(err); }
                         var files = parseCreatedFiles(stdout, dir);
                         assert.equal(files.length, 2);
@@ -76,219 +69,215 @@ describe('mongoose-gen', function () {
                 });
             });
 
-            describe('-r', function () {
+            describe('-r', function() {
                 var files;
                 var dir;
 
-                before(function (done) {
-                    createEnvironment(function (err, newDir) {
+                before(function(done) {
+                    createEnvironment(function(err, newDir) {
                         if (err) { return done(err); }
                         dir = newDir;
                         done();
                     });
                 });
-                after(function (done) {
+                after(function(done) {
                     this.timeout(300000);
                     cleanup(dir, done);
                 });
 
-                it('Should have basic directory', function (done) {
-                    run(dir, ['-m', 'modelName', '-f', 'fieldName:number', '-r'], function (err, stdout) {
+                it('Should have basic directory', function(done) {
+                    run(dir, ['-m', 'modelName', '-f', 'fieldName:number', '-r'], function(err, stdout) {
                         if (err) { return done(err); }
                         files = parseCreatedFiles(stdout, dir);
                         assert.equal(files.length, 6);
                         done();
                     });
                 });
-                it('Should have model file', function (done) {
+                it('Should have model file', function(done) {
                     assert.notEqual(files.indexOf('models/modelNameModel.js'), -1);
                     done();
                 });
-                it('Should have controller file', function (done) {
+                it('Should have controller file', function(done) {
                     assert.notEqual(files.indexOf('controllers/modelNameController.js'), -1);
                     done();
                 });
-                it('Should have router file', function (done) {
-                    assert.notEqual(files.indexOf('routes/modelNameRoutes.js'), -1);
+                it('Should have router file', function(done) {
+                    assert.notEqual(files.indexOf('routes/modelNames.js'), -1);
                     done();
                 });
             });
         });
     });
 
-    describe('Interactive mode', function () {
-        describe('Normal execution', function () {
-            describe('Basic usage', function () {
+    describe('Interactive mode', function() {
+        describe('Normal execution', function() {
+            describe('Basic usage', function() {
                 var dir;
                 var files;
 
-                before(function (done) {
-                    createEnvironment(function (err, newDir) {
+                before(function(done) {
+                    createEnvironment(function(err, newDir) {
                         if (err) { return done(err); }
                         dir = newDir;
                         done();
                     });
                 });
-                after(function (done) {
+                after(function(done) {
                     this.timeout(300000);
                     cleanup(dir, done);
                 });
 
-                it('Should print instructions', function (done) {
-                    nexpect.spawn(binPath, {cwd: dir})
-                        .expect(CLI_PHRASES.QUESTION_MODEL_NAME)
+                it('Should print instructions', function(done) {
+                    nexpect.spawn(binPath, { cwd: dir })
+                        .expect(cliPhrases.questionModelName)
                         .sendline('modelName')
-                        .expect(CLI_PHRASES.AVAILABLE_TYPE)
-                        .expect(CLI_PHRASES.QUESTION_FIELD_NAME)
+                        .expect(cliPhrases.availableType)
+                        .expect(cliPhrases.questionFieldName)
                         .sendline('fieldName1')
-                        .expect(CLI_PHRASES.QUESTION_FIELD_TYPE)
+                        .expect(cliPhrases.questionFieldType)
                         .sendline('string')
-                        .expect(CLI_PHRASES.QUESTION_FIELD_NAME)
+                        .expect(cliPhrases.questionFieldName)
                         .sendline('fieldName2')
-                        .expect(CLI_PHRASES.QUESTION_FIELD_TYPE)
+                        .expect(cliPhrases.questionFieldType)
                         .sendline('\r')
-                        .expect(CLI_PHRASES.QUESTION_FIELD_NAME)
+                        .expect(cliPhrases.questionFieldName)
                         .sendline('\r')
-                        .expect(CLI_PHRASES.QUESTION_GENERATE_REST)
+                        .expect(cliPhrases.questionGenerateRest)
                         .sendline('no')
-                        .expect(CLI_PHRASES.QUESTION_FILES_TREE)
-                        .sendline('t')
                         .sendEof()
-                        .run(function (err, stdout, exitcod) {
+                        .run(function(err, stdout, exitcod) {
                             if (err) { return done(err); }
                             assert.equal(err, null);
                             files = parseCreatedFiles(stdout, dir);
                             done();
                         });
                 });
-                it('Should have model file', function (done) {
+                it('Should have model file', function(done) {
                     assert.equal(files.length, 2);
                     assert.notEqual(files.indexOf('models/modelNameModel.js'), -1);
                     done();
                 });
             });
 
-            describe('Rest', function () {
+            describe('Rest', function() {
                 var dir;
                 var files;
 
-                before(function (done) {
-                    createEnvironment(function (err, newDir) {
+                before(function(done) {
+                    createEnvironment(function(err, newDir) {
                         if (err) { return done(err); }
                         dir = newDir;
                         done();
                     });
                 });
-                after(function (done) {
+                after(function(done) {
                     this.timeout(300000);
                     cleanup(dir, done);
                 });
 
-                it('Should print instructions', function (done) {
-                    nexpect.spawn(binPath, {cwd: dir})
-                        .expect(CLI_PHRASES.QUESTION_MODEL_NAME)
+                it('Should print instructions', function(done) {
+                    nexpect.spawn(binPath, { cwd: dir })
+                        .expect(cliPhrases.questionModelName)
                         .sendline('modelName')
-                        .expect(CLI_PHRASES.AVAILABLE_TYPE)
-                        .expect(CLI_PHRASES.QUESTION_FIELD_NAME)
+                        .expect(cliPhrases.availableType)
+                        .expect(cliPhrases.questionFieldName)
                         .sendline('fieldName1')
-                        .expect(CLI_PHRASES.QUESTION_FIELD_TYPE)
+                        .expect(cliPhrases.questionFieldType)
                         .sendline('string')
-                        .expect(CLI_PHRASES.QUESTION_FIELD_NAME)
+                        .expect(cliPhrases.questionFieldName)
                         .sendline('fieldName2')
-                        .expect(CLI_PHRASES.QUESTION_FIELD_TYPE)
+                        .expect(cliPhrases.questionFieldType)
                         .sendline('\r')
-                        .expect(CLI_PHRASES.QUESTION_FIELD_NAME)
+                        .expect(cliPhrases.questionFieldName)
                         .sendline('\r')
-                        .expect(CLI_PHRASES.QUESTION_GENERATE_REST)
+                        .expect(cliPhrases.questionGenerateRest)
                         .sendline('yes')
-                        .expect(CLI_PHRASES.QUESTION_FILES_TREE)
-                        .sendline('t')
                         .sendEof()
-                        .run(function (err, stdout, exitcod) {
+                        .run(function(err, stdout, exitcod) {
                             if (err) { return done(err); }
                             assert.equal(err, null);
                             files = parseCreatedFiles(stdout, dir);
                             done();
                         });
                 });
-                it('Should have basic directory', function (done) {
+                it('Should have basic directory', function(done) {
                     assert.equal(files.length, 6);
                     done();
                 });
-                it('Should have model file', function (done) {
+                it('Should have model file', function(done) {
                     assert.notEqual(files.indexOf('models/modelNameModel.js'), -1);
                     done();
                 });
-                it('Should have controller file', function (done) {
+                it('Should have controller file', function(done) {
                     assert.notEqual(files.indexOf('controllers/modelNameController.js'), -1);
                     done();
                 });
-                it('Should have router file', function (done) {
-                    assert.notEqual(files.indexOf('routes/modelNameRoutes.js'), -1);
+                it('Should have router file', function(done) {
+                    assert.notEqual(files.indexOf('routes/modelNames.js'), -1);
                     done();
                 });
             });
         });
 
-        describe('Error execution', function () {
-            it('Require model arg, should print error', function (done) {
+        describe('Error execution', function() {
+            it('Require model arg, should print error', function(done) {
                 nexpect.spawn(binPath)
-                    .expect(CLI_PHRASES.QUESTION_MODEL_NAME)
+                    .expect(cliPhrases.questionModelName)
                     .sendline('')
-                    .expect(CLI_PHRASES.ERROR_MODEL_NAME)
-                    .expect(CLI_PHRASES.QUESTION_MODEL_NAME)
+                    .expect(cliPhrases.errorModelName)
+                    .expect(cliPhrases.questionModelName)
                     .sendline('  ')
-                    .expect(CLI_PHRASES.ERROR_MODEL_NAME)
-                    .expect(CLI_PHRASES.QUESTION_MODEL_NAME)
+                    .expect(cliPhrases.errorModelName)
+                    .expect(cliPhrases.questionModelName)
                     .sendline('process.exit()')
                     .sendEof()
-                    .run(function (err, stdout, exitcod) {
+                    .run(function(err, stdout, exitcod) {
                         if (err) { return done(err); }
                         assert.equal(err, null);
                         done();
                     });
             });
-            it('Field type is not allowed, should print error', function (done) {
+            it('Field type is not allowed, should print error', function(done) {
                 nexpect.spawn(binPath)
-                    .expect(CLI_PHRASES.QUESTION_MODEL_NAME)
+                    .expect(cliPhrases.questionModelName)
                     .sendline('modelName')
-                    .expect(CLI_PHRASES.AVAILABLE_TYPE)
-                    .expect(CLI_PHRASES.QUESTION_FIELD_NAME)
+                    .expect(cliPhrases.availableType)
+                    .expect(cliPhrases.questionFieldName)
                     .sendline('fieldName1')
-                    .expect(CLI_PHRASES.QUESTION_FIELD_TYPE)
+                    .expect(cliPhrases.questionFieldType)
                     .sendline('foo')
-                    .expect(CLI_PHRASES.ERROR_FIELD_TYPE_INVALID)
-                    .expect(CLI_PHRASES.QUESTION_FIELD_TYPE)
+                    .expect(cliPhrases.errorTypeArgument)
+                    .expect(cliPhrases.questionFieldType)
                     .sendline('process.exit()')
                     .sendEof()
-                    .run(function (err, stdout, exitcod) {
+                    .run(function(err, stdout, exitcod) {
                         if (err) { return done(err); }
                         assert.equal(err, null);
                         done();
                     });
             });
-            it('Rest arg no valid, should print error', function (done) {
+            it('Rest arg no valid, should print error', function(done) {
                 nexpect.spawn(binPath)
-                    .expect(CLI_PHRASES.QUESTION_MODEL_NAME)
+                    .expect(cliPhrases.questionModelName)
                     .sendline('modelName')
-                    .expect(CLI_PHRASES.AVAILABLE_TYPE)
-                    .expect(CLI_PHRASES.QUESTION_FIELD_NAME)
+                    .expect(cliPhrases.availableType)
+                    .expect(cliPhrases.questionFieldName)
                     .sendline('fieldName1')
-                    .expect(CLI_PHRASES.QUESTION_FIELD_TYPE)
+                    .expect(cliPhrases.questionFieldType)
                     .sendline('string')
-                    .expect(CLI_PHRASES.QUESTION_FIELD_NAME)
+                    .expect(cliPhrases.questionFieldName)
                     .sendline('fieldName2')
-                    .expect(CLI_PHRASES.QUESTION_FIELD_TYPE)
+                    .expect(cliPhrases.questionFieldType)
                     .sendline('\r')
-                    .expect(CLI_PHRASES.QUESTION_FIELD_NAME)
+                    .expect('Field Name (press <return> to stop adding fields) : ')
                     .sendline('\r')
-                    .expect(CLI_PHRASES.QUESTION_GENERATE_REST)
+                    .expect(cliPhrases.questionGenerateRest)
                     .sendline('foo')
-                    .expect(CLI_PHRASES.ERROR_REST_ARGUMENT)
-                    .expect(CLI_PHRASES.QUESTION_GENERATE_REST)
+                    .expect(cliPhrases.errorRestArgument)
+                    .expect(cliPhrases.questionGenerateRest)
                     .sendline('process.exit()')
                     .sendEof()
-                    .run(function (err, stdout, exitcod) {
+                    .run(function(err, stdout, exitcod) {
                         if (err) { return done(err); }
                         assert.equal(err, null);
                         done();
@@ -297,8 +286,8 @@ describe('mongoose-gen', function () {
         });
     });
 
-    it('--help, should print help', function (done) {
-        run('', ['--help'], function (err, stdout) {
+    it('--help, should print help', function(done) {
+        run('', ['--help'], function(err, stdout) {
             if (err) { return done(err); }
             assert.ok(/Usage: mongoose-gen \[options\]/.test(stdout));
             assert.ok(/--help/.test(stdout));
@@ -306,7 +295,6 @@ describe('mongoose-gen', function () {
             assert.ok(/-m, --model <modelName>  model name/.test(stdout));
             assert.ok(/-f, --fields <fields>    model fields/.test(stdout));
             assert.ok(/-r, --rest               enable generation REST/.test(stdout));
-            assert.ok(/-t, --tree <tree>        files tree generation grouped by <t>ype or by <m>odule/.test(stdout));
             done();
         });
     });
@@ -323,7 +311,7 @@ function cleanup(dir, callback) {
         dir = tempDir;
     }
 
-    rimraf(tempDir, function (err) {
+    rimraf(tempDir, function(err) {
         callback(err);
     });
 }

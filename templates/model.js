@@ -1,6 +1,8 @@
-var mongoose = require('mongoose');
-var Schema   = mongoose.Schema;
+const mongoose = require('mongoose')
+let Schema = mongoose.Schema
 
-var {schemaName} = new Schema({fields});
+const fields = { fields }
 
-module.exports = mongoose.model('{modelName}', {schemaName});
+let { schemaName } = new Schema(fields)
+
+module.exports = mongoose.model('{modelName}', { schemaName })

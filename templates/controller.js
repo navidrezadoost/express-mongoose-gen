@@ -1,111 +1,110 @@
-var {modelName} = require({modelPath});
+const { upperName } = require('../models/{modelName}.js')
 
 /**
  * {controllerName}.js
  *
- * @description :: Server-side logic for managing {pluralName}.
+ * @description :: Server-side logic for managing {name}.
  */
 module.exports = {
 
     /**
      * {controllerName}.list()
      */
-    list: function (req, res) {
-        {modelName}.find(function (err, {pluralName}) {
+    list: (req, res) => {
+        { upperName }.find(req.query.where, req.query.fields, req.query.sort, (err, { name }) => {
             if (err) {
                 return res.status(500).json({
-                    message: 'Error when getting {name}.',
+                    message: 'Erro ao obter {name}.',
                     error: err
-                });
+                })
             }
-            return res.json({pluralName});
-        });
+            return res.json({ name })
+        })
     },
 
     /**
      * {controllerName}.show()
      */
-    show: function (req, res) {
-        var id = req.params.id;
-        {modelName}.findOne({_id: id}, function (err, {name}) {
+    show: (req, res) => {
+        let id = req.params.id { upperName }.findOne({ _id: id }, (err, { name }) => {
             if (err) {
                 return res.status(500).json({
-                    message: 'Error when getting {name}.',
+                    message: 'Erro ao obter {name} específico.',
                     error: err
-                });
+                })
             }
-            if (!{name}) {
+            if (!{ name }) {
                 return res.status(404).json({
-                    message: 'No such {name}'
-                });
+                    message: '{name} não encontrado'
+                })
             }
-            return res.json({name});
-        });
+            return res.json({ name })
+        })
     },
 
     /**
      * {controllerName}.create()
      */
-    create: function (req, res) {
-        var {name} = new {modelName}({{createFields}
-        });
+    create: (req, res) => {
+        let { name } = new { upperName }(req.body)
 
-        {name}.save(function (err, {name}) {
+        { name }.save((err, { name }) => {
             if (err) {
                 return res.status(500).json({
-                    message: 'Error when creating {name}',
+                    message: 'Erro ao criar {name}',
                     error: err
-                });
+                })
             }
-            return res.status(201).json({name});
-        });
+            return res.status(201).json({ name })
+        })
     },
 
     /**
      * {controllerName}.update()
      */
-    update: function (req, res) {
-        var id = req.params.id;
-        {modelName}.findOne({_id: id}, function (err, {name}) {
+    update: (req, res) => {
+        let id = req.params.id { upperName }.findOne({ _id: id }, (err, { name }) => {
             if (err) {
                 return res.status(500).json({
-                    message: 'Error when getting {name}',
+                    message: 'Erro ao obter {name}',
                     error: err
-                });
+                })
             }
-            if (!{name}) {
+            if (!{ name }) {
                 return res.status(404).json({
-                    message: 'No such {name}'
-                });
+                    message: '{name} não encontrado'
+                })
             }
 
-            {updateFields}
-            {name}.save(function (err, {name}) {
+            for (let attr in { name }) {
+                { name }[attr] = req.body[attr] || { name }[attr]
+            }
+
+            { name }.save((err, { name }) => {
                 if (err) {
                     return res.status(500).json({
-                        message: 'Error when updating {name}.',
+                        message: 'Erro ao atualizar {name}.',
                         error: err
-                    });
+                    })
                 }
 
-                return res.json({name});
-            });
-        });
+                return res.json({ name })
+            })
+        })
     },
 
     /**
      * {controllerName}.remove()
      */
-    remove: function (req, res) {
-        var id = req.params.id;
-        {modelName}.findByIdAndRemove(id, function (err, {name}) {
+    remove: (req, res) => {
+        let id = req.params.id { upperName }.findByIdAndRemove(id, (err, { name }) => {
             if (err) {
                 return res.status(500).json({
-                    message: 'Error when deleting the {name}.',
+                    message: 'Erro ao deletar {name}.',
                     error: err
-                });
+                })
             }
-            return res.status(204).json();
-        });
+            return res.status(204).json()
+        })
     }
-};
+}
