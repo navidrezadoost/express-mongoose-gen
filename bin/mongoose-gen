@@ -1,26 +1,21 @@
-#!/usr/bin/env node
+const program  = require('commander');
+const readline = require('readline');
+const async    = require('async');
+const generators = require('../lib/generators');
+const cliStyles = require('../lib/cliStyles');
 
-/**
- * Module dependencies
- */
-var program  = require('commander');
-var readline = require('readline');
-var async    = require('async');
-var generators = require('../lib/generators');
-var cliStyles = require('../lib/cliStyles');
+const pkg = require('../package.json');
+const version = pkg.version;
 
-var pkg = require('../package.json');
-var version = pkg.version;
-
-var rl = readline.createInterface({
+const rl = readline.createInterface({
     input : process.stdin,
     output: process.stdout
 });
 
-var ALLOWED_FIELDS_TYPES = ['string', 'number', 'date', 'boolean', 'array', 'objectId'];
-var ALLOWED_REST_ARGUMENT = {'YES': 'yes', 'NO': 'no'};
-var ALLOWED_FILE_TREE_ARGUMENT = {'TYPE': 't', 'MODULE': 'm'};
-var CLI_PHRASES = {
+const ALLOWED_FIELDS_TYPES = ['string', 'number', 'date', 'boolean', 'array', 'objectId'];
+const ALLOWED_REST_ARGUMENT = {'YES': 'yes', 'NO': 'no'};
+const ALLOWED_FILE_TREE_ARGUMENT = {'TYPE': 't', 'MODULE': 'm'};
+const CLI_PHRASES = {
     AVAILABLE_TYPE: 'Available types : string, number, date, boolean, array, objectId',
     QUESTION_MODEL_NAME: 'Model Name : ',
     QUESTION_FIELD_NAME: 'Field Name (press <return> to stop adding fields) : ',
@@ -51,8 +46,8 @@ program
 ;
 
 // Main program
-(function (path) {
-    var ts = !!(program.ts);
+((path) => {
+    let ts = !!(program.ts);
 
     if (program.model || program.fields) {
         runNonInteractiveMode(path, ts);
@@ -61,32 +56,28 @@ program
     }
 })('.');
 
-/**
- * Get parameters in interactive mode
- * @param {string} path destination path
- * @param {boolean} ts generating code in TS
- */
+
 function runInteractiveMode (path, ts) {
     async.series({
-            name: function (cb) {
-                askQuestion(CLI_PHRASES.QUESTION_MODEL_NAME, isModelNameParamValid, function (name) {
+            name: (cb) => {
+                askQuestion(CLI_PHRASES.QUESTION_MODEL_NAME, isModelNameParamValid,  (name) => {
                     console.log(cliStyles.green + CLI_PHRASES.AVAILABLE_TYPE + cliStyles.reset);
                     cb(null, name);
                 });
             },
-            fields: function (cb) {
-                var exit   = false;
-                var fields = [];
-                var currentField = {};
+            fields: (cb) => {
+                const exit   = false;
+                const fields = [];
+                const currentField = {};
 
                 async.whilst(
-                    function () { return !exit; },
-                    function (cb) {
+                     () => { return !exit; },
+                    (cb) => {
                         async.series({
-                                name: function (cb) {
+                                name: (cb) => {
                                     askQuestion(CLI_PHRASES.QUESTION_FIELD_NAME,
                                         null,
-                                        function (fieldName) {
+                                         (fieldName) => {
                                             if (fieldName.trim().length === 0) {
                                                 exit = true;
                                             }
@@ -94,17 +85,17 @@ function runInteractiveMode (path, ts) {
                                         }
                                     );
                                 },
-                                type: function (cb) {
+                                type: (cb) => {
                                     askQuestion(CLI_PHRASES.QUESTION_FIELD_TYPE, isFieldTypeParamValid,
-                                        function (fieldType) {
+                                         (fieldType) => {
                                             currentField.type = (fieldType.trim().length === 0) ? 'string' : fieldType;
                                             cb(null, currentField.type);
                                         }
                                     );
                                 },
-                                reference: function (cb) {
+                                reference: (cb) => {
                                     if (currentField.type === 'objectId') {
-                                        askQuestion(CLI_PHRASES.QUESTION_FIELD_REF, null, function (referenceName) {
+                                        askQuestion(CLI_PHRASES.QUESTION_FIELD_REF, null, (referenceName) => {
                                             referenceName = (referenceName.trim().length === 0) ?
                                                 'INSERT_YOUR_REFERENCE_NAME_HERE'
                                                 : referenceName;
@@ -115,49 +106,49 @@ function runInteractiveMode (path, ts) {
                                     }
                                 }
                             },
-                            function (err, results) {
+                         (err, results) => {
                                 if (!err) {
                                     fields.push(results);
                                 }
                                 cb();
                             });
                     },
-                    function (err, results) {
+                     (err, results) => {
                         cb(null, fields);
                     });
             },
-            rest: function (cb) {
-                askQuestion(CLI_PHRASES.QUESTION_GENERATE_REST, isRestParamValid, function (rest) {
+            rest: (cb) => {
+                askQuestion(CLI_PHRASES.QUESTION_GENERATE_REST, isRestParamValid, (rest) => {
                     rest = (rest.trim().length === 0) ? 'yes' : rest;
                     cb(null, rest);
                 });
             },
-            generateMethod: function (cb) {
-                askQuestion(CLI_PHRASES.QUESTION_FILES_TREE, isFileTreeParamValid, function (generateMethod) {
+            generateMethod: (cb) => {
+                askQuestion(CLI_PHRASES.QUESTION_FILES_TREE, isFileTreeParamValid, (generateMethod) => {
                     generateMethod = (generateMethod.trim().length === 0) ? 't' : generateMethod;
                     cb(null, generateMethod);
                 });
             }
         },
-        function (err, results) {
+         (err, results) => {
             if (err) {
                 return closeProgram();
             }
 
             async.parallel([
-                    function (cb) {
+                     (cb) => {
                         generators.generateModel(path, results.name, results.fields, results.generateMethod, ts, cb);
                     },
-                    function (cb) {
+                     (cb) => {
                         if (results.rest !== 'yes') { return cb(); }
                         generators.generateRouter(path, results.name, results.generateMethod, ts,  cb);
                     }            ,
-                    function (cb) {
+                     (cb) => {
                         if (results.rest !== 'yes') { return cb(); }
                         generators.generateController(path, results.name, results.fields, results.generateMethod, ts, cb);
                     }
                 ],
-                function (err, results) {
+             (err, results) => {
                     closeProgram();
                 }
             );
@@ -165,19 +156,14 @@ function runInteractiveMode (path, ts) {
     );
 }
 
-/**
- * Get parameters in non-interactive mode
- * @param {string} path destination path
- * @param {boolean} ts generating code in TS
- */
 function runNonInteractiveMode(path, ts) {
     if (!isModelNameParamValid(program.model) || !isFieldsParamValid(program.fields)) {
         return closeProgram();
     }
 
-    var modelName = program.model;
-    var modelFields = formatFieldsParamInArray(program.fields);
-    var fileTree = program.tree || ALLOWED_FILE_TREE_ARGUMENT.TYPE;
+    const modelName = program.model;
+    const modelFields = formatFieldsParamInArray(program.fields);
+    const fileTree = program.tree || ALLOWED_FILE_TREE_ARGUMENT.TYPE;
 
     if (!isFileTreeParamValid(fileTree)) {
         return closeProgram();
@@ -186,33 +172,27 @@ function runNonInteractiveMode(path, ts) {
     if (!modelFields) { return closeProgram(); }
 
     async.parallel([
-            function (cb) {
+             (cb) => {
                 generators.generateModel(path, modelName, modelFields, fileTree, ts, cb);
             },
-            function (cb) {
+             (cb) => {
                 if (!program.rest) { return cb(); }
                 generators.generateRouter(path, modelName, fileTree, ts, cb);
             },
-            function (cb) {
+             (cb) => {
                 if (!program.rest) { return cb(); }
                 generators.generateController(path, modelName, modelFields, fileTree, ts, cb);
             }
         ],
-        function (err, results) {
+     (err, results) => {
             closeProgram();
         }
     );
 }
 
-/**
- * Ask a question in the console and waits for a response
- * if the answer is invalid, the question is recalled
- * @param {string} question input question in the console
- * @param {function} validate validation function (nullable)
- * @param {function} callback callback function
- */
+
 function askQuestion(question, validate, callback) {
-    rl.question(question, function(answer) {
+    rl.question(question, (answer) => {
         if (validate) {
             if (!validate(answer)) {
                 askQuestion(question, validate, callback);
@@ -223,19 +203,11 @@ function askQuestion(question, validate, callback) {
     });
 }
 
-/**
- * Close the program
- */
 function closeProgram() {
     rl.close();
     process.exit();
 }
 
-/**
- * Validate model name input
- * @param {string} name
- * @returns {boolean} is validated
- */
 function isModelNameParamValid(name) {
     if (!name || name.trim().length === 0) {
         consoleError(CLI_PHRASES.ERROR_MODEL_NAME);
@@ -244,11 +216,6 @@ function isModelNameParamValid(name) {
     return true;
 }
 
-/**
- * validate field type input
- * @param {string} fieldType
- * @returns {boolean} is validated
- */
 function isFieldTypeParamValid(fieldType) {
     if (!fieldType || fieldType.trim().length === 0) { fieldType = ALLOWED_FIELDS_TYPES[0]; } // default value
     if (ALLOWED_FIELDS_TYPES.indexOf(fieldType) === -1) {
@@ -258,11 +225,7 @@ function isFieldTypeParamValid(fieldType) {
     return true;
 }
 
-/**
- * validate rest input
- * @param {string} param
- * @returns {boolean} is validated
- */
+
 function isRestParamValid(param) {
     if (!param || param.trim().length === 0) { param = ALLOWED_REST_ARGUMENT.YES; } // default value
     if (param !== ALLOWED_REST_ARGUMENT.YES && param !== ALLOWED_REST_ARGUMENT.NO) {
@@ -272,11 +235,7 @@ function isRestParamValid(param) {
     return true;
 }
 
-/**
- * validate file tree generation input
- * @param {string} param
- * @returns {boolean} is validated
- */
+
 function isFileTreeParamValid(param) {
     if (!param || param.trim().length === 0) { param = ALLOWED_FILE_TREE_ARGUMENT.TYPE; } // default value
     if (param !== ALLOWED_FILE_TREE_ARGUMENT.TYPE && param !== ALLOWED_FILE_TREE_ARGUMENT.MODULE) {
@@ -286,11 +245,7 @@ function isFileTreeParamValid(param) {
     return true;
 }
 
-/**
- * Validate fields input
- * @param {string} fields
- * @returns {boolean} is validated
- */
+
 function isFieldsParamValid(fields) {
     if (!fields || fields.trim().length === 0) {
         consoleError(CLI_PHRASES.ERROR_FIELD_REQUIRED);
@@ -299,12 +254,6 @@ function isFieldsParamValid(fields) {
     return true;
 }
 
-/**
- * Validate name / type of a field
- * @param {string} fieldName
- * @param {string} fieldType
- * @returns {boolean} is validated
- */
 function isFieldValid(fieldName, fieldType) {
     if (!fieldName || fieldName.trim().length === 0) {
         consoleError(CLI_PHRASES.ERROR_FIELD_NAME_REQUIRED);
@@ -321,22 +270,17 @@ function isFieldValid(fieldName, fieldType) {
     return true;
 }
 
-/**
- * Format fields input in array
- * @param {string} fields fields input
- * @returns {Array} fields formatted
- */
 function formatFieldsParamInArray(fields) {
-    var arrayFields = fields.split(',');
-    var result = [];
+    const arrayFields = fields.split(',');
+    const result = [];
 
-    var err = arrayFields.every(function (field) {
-        var f = field.split(':');
+    let err = arrayFields.every(function (field) {
+        let f = field.split(':');
 
-        var fieldName = f[0];
-        var fieldType = (f[1] || ALLOWED_FIELDS_TYPES[0]);
-        var fieldRef = '';
-        var isArray = false;
+        let fieldName = f[0];
+        let fieldType = (f[1] || ALLOWED_FIELDS_TYPES[0]);
+        let fieldRef = '';
+        let isArray = false;
 
         if (fieldType === ALLOWED_FIELDS_TYPES[5]) {
             fieldRef = f[2];

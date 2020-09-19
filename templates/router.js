@@ -1,30 +1,17 @@
-var express = require('express');
-var router = express.Router();
-var {controllerName} = require({controllerPath});
+const express = require('express');
+const router = express.Router();
+const { controllerName } = require({ controllerPath });
 
-/*
- * GET
- */
-router.get('/', {controllerName}.list);
 
-/*
- * GET
- */
-router.get('/:id', {controllerName}.show);
+router.get('/', { controllerName }.list.bind({ controllerName }));
 
-/*
- * POST
- */
-router.post('/', {controllerName}.create);
+router.get('/:id', { controllerName }.show.bind({ controllerName }));
 
-/*
- * PUT
- */
-router.put('/:id', {controllerName}.update);
+router.post('/', { controllerName }.create.bind({ controllerName }));
 
-/*
- * DELETE
- */
-router.delete('/:id', {controllerName}.remove);
+router.put('/:id', { controllerName }.update.bind({ controllerName }));
+
+router.delete('/:id', { controllerName }.remove.bind({ controllerName }));
+
 
 module.exports = router;
