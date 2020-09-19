@@ -1,7 +1,6 @@
-const { constants } = require('http2');
-const os = require('os');
+var os = require('os');
 
-const objectId = {
+var objectId = {
     name: '{' + os.EOL +
         '\t \ttype: Schema.Types.ObjectId,' + os.EOL +
         '\t \tref: \'{ref}\'' + os.EOL +

@@ -7,6 +7,7 @@ module.exports = new class { modelName } {
             if (err) {
                 return res.status(500).json({
                     message: 'Error when getting {name}.',
+                    status: res.statusCode,
                     error: err
                 });
             }
@@ -14,16 +15,18 @@ module.exports = new class { modelName } {
         })
     };
     show(req, res) {
-        let id = req.params.id; { modelName }.findById({ _id: id }, (err, { name }) => {
+        { modelName }.findById(req.params.id, (err, { name }) => {
             if (err) {
                 return res.status(500).json({
                     message: 'Error when getting {name}.',
+                    status: res.statusCode,
                     error: err
                 });
             }
             if (!{ name }) {
                 return res.status(404).json({
-                    message: 'No such {name}'
+                    message: 'No such {name}',
+                    status: res.statusCode
                 });
             }
             res.status(200).json({ name });
@@ -32,51 +35,41 @@ module.exports = new class { modelName } {
     create(req, res) {
         let { name } = new { modelName }({
             { createFields }
-        }); { name }.save((err, { name }) => {
-            if (err) {
-                return res.status(500).json({
-                    message: 'Error when creating {name}',
-                    error: err
-                });
-            }
-            res.status(200).json({ name });
-        });
+        }); { name }.save()
+            .then({ name } => res.status(200).json({ name }))
+            .catch(err => res.status(500).json({
+                message: 'Error when create {name}.',
+                status: res.statusCode,
+                error: err
+            }))
     };
     update(req, res) {
-        let id = req.params.id; { modelName }.findById({ _id: id }, (err, { name }) => {
+        { modelName }.findByIdAndUpdate(req.params.id, { updateFields }, (err, { name }) => {
             if (err) {
                 return res.status(500).json({
                     message: 'Error when getting {name}',
+                    status: res.statusCode,
                     error: err
                 });
             }
             if (!{ name }) {
                 return res.status(404).json({
-                    message: 'No such {name}'
+                    message: 'No such {name}',
+                    status: res.statusCode
                 });
             }
-
-            { updateFields } { name }.save((err, { name }) => {
-                if (err) {
-                    return res.status(500).json({
-                        message: 'Error when updating {name}.',
-                        error: err
-                    });
-                }
-
-                return res.status(200).json({ name });
-            });
+            return res.status(200).json({ name });
         });
     };
     remove(req, res) {
-        let id = req.params.id; { modelName }.findByIdAndRemove(id, (err, { name }) => {
+        { modelName }.findByIdAndRemove(req.params.id, (err, { name }) => {
             if (err) {
                 return res.status(500).json({
                     message: 'Error when deleting the {name}.',
                     error: err
                 });
             }
-            res.status(200).json('item removed!');
+            res.status(200).json('item { name } removed!');
         });
     }
 }
