@@ -17,7 +17,26 @@ var rl = readline.createInterface({
     output: process.stdout
 });
 
-var allowedFieldsTypes = ['string', 'number', 'date', 'boolean', 'array', 'objectId'];
+var ALLOWED_FIELDS_TYPES = ['string', 'number', 'date', 'boolean', 'array', 'objectId'];
+var ALLOWED_REST_ARGUMENT = { 'YES': 'yes', 'NO': 'no' };
+var ALLOWED_FILE_TREE_ARGUMENT = { 'TYPE': 't', 'MODULE': 'm' };
+var CLI_PHRASES = {
+    AVAILABLE_TYPE: 'Available types : string, number, date, boolean, array, objectId',
+    QUESTION_MODEL_NAME: 'Model Name : ',
+    QUESTION_FIELD_NAME: 'Field Name (press <return> to stop adding fields) : ',
+    QUESTION_FIELD_TYPE: 'Field Type [string] : ',
+    QUESTION_FIELD_REF: 'Reference (model name referred by the objectId field) : ',
+    QUESTION_GENERATE_REST: 'Generate Rest (yes/no) ? [yes] : ',
+    QUESTION_FILES_TREE: 'Files tree generation grouped by Type or by Module (t/m) ? [t] : ',
+    ERROR_MODEL_NAME: 'Argument required : Model name',
+    ERROR_TYPE_ARGUMENT: 'Invalid Argument : Field type is not allowed',
+    ERROR_REST_ARGUMENT: 'Argument invalid : rest',
+    ERROR_FILES_TREE_ARGUMENT: 'Argument invalid : file tree generation',
+    ERROR_FIELD_REQUIRED: 'Argument required : fields',
+    ERROR_FIELD_NAME_REQUIRED: 'Argument required : Field Name',
+    ERROR_FIELD_TYPE_REQUIRED: 'Argument required : Field type',
+    ERROR_FIELD_TYPE_INVALID: 'Invalid Argument : Field type is not allowed'
+};
 
 // CLI
 program
@@ -26,31 +45,31 @@ program
     .option('-m, --model <modelName>', 'model name')
     .option('-f, --fields <fields>', 'model fields (name1:type1,name2:type2)')
     .option('-r, --rest', 'enable generation REST')
-    .option('--es6', 'Use ES6/ES7 (Modern) javascript')
+    .option('-t, --tree <tree>', 'files tree generation grouped by <t>ype or by <m>odule')
+    .option('--ts', 'Generating code in TS')
     .parse(process.argv);
 
 // Main program
 (function(path) {
-    var es6 = !!(program.es6);
+    var ts = !!(program.ts);
 
     if (program.model || program.fields) {
-        runNonInteractiveMode(path, es6);
+        runNonInteractiveMode(path, ts);
     } else {
-        runInteractiveMode(path, es6);
+        runInteractiveMode(path, ts);
     }
 })('.');
 
 /**
  * Get parameters in interactive mode
  * @param {string} path destination path
+ * @param {boolean} ts generating code in TS
  */
-function runInteractiveMode(path, es6) {
+function runInteractiveMode(path, ts) {
     async.series({
             name: function(cb) {
-                askQuestion('Model Name : ', isModelNameParamValid, function(name) {
-                    console.log(cliStyles.green + 'Available types : ' +
-                        allowedFieldsTypes.toString().split(',').join(', ') + cliStyles.reset
-                    );
+                askQuestion(CLI_PHRASES.QUESTION_MODEL_NAME, isModelNameParamValid, function(name) {
+                    console.log(cliStyles.green + CLI_PHRASES.AVAILABLE_TYPE + cliStyles.reset);
                     cb(null, name);
                 });
             },
@@ -64,7 +83,7 @@ function runInteractiveMode(path, es6) {
                     function(cb) {
                         async.series({
                                 name: function(cb) {
-                                    askQuestion('Field Name (press <return> to stop adding fields) : ',
+                                    askQuestion(CLI_PHRASES.QUESTION_FIELD_NAME,
                                         null,
                                         function(fieldName) {
                                             if (fieldName.trim().length === 0) {
@@ -75,22 +94,21 @@ function runInteractiveMode(path, es6) {
                                     );
                                 },
                                 type: function(cb) {
-                                    askQuestion('Field Type [string] : ', isFieldTypeParamValid, function(fieldType) {
-                                        currentField.type = (fieldType.trim().length === 0) ? 'string' : fieldType;
-                                        cb(null, currentField.type);
-                                    });
+                                    askQuestion(CLI_PHRASES.QUESTION_FIELD_TYPE, isFieldTypeParamValid,
+                                        function(fieldType) {
+                                            currentField.type = (fieldType.trim().length === 0) ? 'string' : fieldType;
+                                            cb(null, currentField.type);
+                                        }
+                                    );
                                 },
                                 reference: function(cb) {
                                     if (currentField.type === 'objectId') {
-                                        askQuestion('Reference (model name referred by the objectId field) : ',
-                                            null,
-                                            function(referenceName) {
-                                                referenceName = (referenceName.trim().length === 0) ?
-                                                    'INSERT_YOUR_REFERENCE_NAME_HERE' :
-                                                    referenceName;
-                                                cb(null, referenceName);
-                                            }
-                                        );
+                                        askQuestion(CLI_PHRASES.QUESTION_FIELD_REF, null, function(referenceName) {
+                                            referenceName = (referenceName.trim().length === 0) ?
+                                                'INSERT_YOUR_REFERENCE_NAME_HERE' :
+                                                referenceName;
+                                            cb(null, referenceName);
+                                        });
                                     } else {
                                         cb(null, null);
                                     }
@@ -108,9 +126,15 @@ function runInteractiveMode(path, es6) {
                     });
             },
             rest: function(cb) {
-                askQuestion('Generate Rest (yes/no) ? [yes] : ', isRestParamValid, function(rest) {
+                askQuestion(CLI_PHRASES.QUESTION_GENERATE_REST, isRestParamValid, function(rest) {
                     rest = (rest.trim().length === 0) ? 'yes' : rest;
                     cb(null, rest);
+                });
+            },
+            generateMethod: function(cb) {
+                askQuestion(CLI_PHRASES.QUESTION_FILES_TREE, isFileTreeParamValid, function(generateMethod) {
+                    generateMethod = (generateMethod.trim().length === 0) ? 't' : generateMethod;
+                    cb(null, generateMethod);
                 });
             }
         },
@@ -121,15 +145,15 @@ function runInteractiveMode(path, es6) {
 
             async.parallel([
                     function(cb) {
-                        generators.generateModel(path, results.name, results.fields, cb, es6);
+                        generators.generateModel(path, results.name, results.fields, results.generateMethod, ts, cb);
                     },
                     function(cb) {
                         if (results.rest !== 'yes') { return cb(); }
-                        generators.generateRouter(path, results.name, cb, es6);
+                        generators.generateRouter(path, results.name, results.generateMethod, ts, cb);
                     },
                     function(cb) {
                         if (results.rest !== 'yes') { return cb(); }
-                        generators.generateController(path, results.name, results.fields, cb, es6);
+                        generators.generateController(path, results.name, results.fields, results.generateMethod, ts, cb);
                     }
                 ],
                 function(err, results) {
@@ -143,28 +167,34 @@ function runInteractiveMode(path, es6) {
 /**
  * Get parameters in non-interactive mode
  * @param {string} path destination path
+ * @param {boolean} ts generating code in TS
  */
-function runNonInteractiveMode(path, es6) {
+function runNonInteractiveMode(path, ts) {
     if (!isModelNameParamValid(program.model) || !isFieldsParamValid(program.fields)) {
         return closeProgram();
     }
 
     var modelName = program.model;
     var modelFields = formatFieldsParamInArray(program.fields);
+    var fileTree = program.tree || ALLOWED_FILE_TREE_ARGUMENT.TYPE;
+
+    if (!isFileTreeParamValid(fileTree)) {
+        return closeProgram();
+    }
 
     if (!modelFields) { return closeProgram(); }
 
     async.parallel([
             function(cb) {
-                generators.generateModel(path, modelName, modelFields, cb, es6);
+                generators.generateModel(path, modelName, modelFields, fileTree, ts, cb);
             },
             function(cb) {
                 if (!program.rest) { return cb(); }
-                generators.generateRouter(path, modelName, cb, es6);
+                generators.generateRouter(path, modelName, fileTree, ts, cb);
             },
             function(cb) {
                 if (!program.rest) { return cb(); }
-                generators.generateController(path, modelName, modelFields, cb, es6);
+                generators.generateController(path, modelName, modelFields, fileTree, ts, cb);
             }
         ],
         function(err, results) {
@@ -207,7 +237,7 @@ function closeProgram() {
  */
 function isModelNameParamValid(name) {
     if (!name || name.trim().length === 0) {
-        consoleError('Argument required : Model name');
+        consoleError(CLI_PHRASES.ERROR_MODEL_NAME);
         return false;
     }
     return true;
@@ -219,9 +249,9 @@ function isModelNameParamValid(name) {
  * @returns {boolean} is validated
  */
 function isFieldTypeParamValid(fieldType) {
-    if (!fieldType || fieldType.trim().length === 0) { fieldType = 'string'; } // default value
-    if (allowedFieldsTypes.indexOf(fieldType) === -1) {
-        consoleError('Invalid Argument : Field type is not allowed');
+    if (!fieldType || fieldType.trim().length === 0) { fieldType = ALLOWED_FIELDS_TYPES[0]; } // default value
+    if (ALLOWED_FIELDS_TYPES.indexOf(fieldType) === -1) {
+        consoleError(CLI_PHRASES.ERROR_TYPE_ARGUMENT);
         return false;
     }
     return true;
@@ -233,9 +263,23 @@ function isFieldTypeParamValid(fieldType) {
  * @returns {boolean} is validated
  */
 function isRestParamValid(param) {
-    if (!param || param.trim().length === 0) { param = 'yes'; } // default value
-    if (param !== 'yes' && param !== 'no') {
-        consoleError('Argument invalid : rest');
+    if (!param || param.trim().length === 0) { param = ALLOWED_REST_ARGUMENT.YES; } // default value
+    if (param !== ALLOWED_REST_ARGUMENT.YES && param !== ALLOWED_REST_ARGUMENT.NO) {
+        consoleError(CLI_PHRASES.ERROR_REST_ARGUMENT);
+        return false;
+    }
+    return true;
+}
+
+/**
+ * validate file tree generation input
+ * @param {string} param
+ * @returns {boolean} is validated
+ */
+function isFileTreeParamValid(param) {
+    if (!param || param.trim().length === 0) { param = ALLOWED_FILE_TREE_ARGUMENT.TYPE; } // default value
+    if (param !== ALLOWED_FILE_TREE_ARGUMENT.TYPE && param !== ALLOWED_FILE_TREE_ARGUMENT.MODULE) {
+        consoleError(CLI_PHRASES.ERROR_FILES_TREE_ARGUMENT);
         return false;
     }
     return true;
@@ -248,7 +292,7 @@ function isRestParamValid(param) {
  */
 function isFieldsParamValid(fields) {
     if (!fields || fields.trim().length === 0) {
-        consoleError('Argument required : fields');
+        consoleError(CLI_PHRASES.ERROR_FIELD_REQUIRED);
         return false;
     }
     return true;
@@ -262,15 +306,15 @@ function isFieldsParamValid(fields) {
  */
 function isFieldValid(fieldName, fieldType) {
     if (!fieldName || fieldName.trim().length === 0) {
-        consoleError('Argument required : Field Name');
+        consoleError(CLI_PHRASES.ERROR_FIELD_NAME_REQUIRED);
         return false;
     }
     if (!fieldType || fieldType.trim().length === 0) {
-        consoleError('Argument required : Field type');
+        consoleError(CLI_PHRASES.ERROR_FIELD_TYPE_REQUIRED);
         return false;
     }
-    if (allowedFieldsTypes.indexOf(fieldType) === -1) {
-        consoleError('Invalid Argument : Field type is not allowed');
+    if (ALLOWED_FIELDS_TYPES.indexOf(fieldType) === -1) {
+        consoleError(CLI_PHRASES.ERROR_FIELD_TYPE_INVALID);
         return false;
     }
     return true;
@@ -287,15 +331,28 @@ function formatFieldsParamInArray(fields) {
 
     var err = arrayFields.every(function(field) {
         var f = field.split(':');
+
         var fieldName = f[0];
-        var fieldType = (f[1] || 'string');
+        var fieldType = (f[1] || ALLOWED_FIELDS_TYPES[0]);
+        var fieldRef = '';
+        var isArray = false;
+
+        if (fieldType === ALLOWED_FIELDS_TYPES[5]) {
+            fieldRef = f[2];
+            isArray = f[3] === ALLOWED_FIELDS_TYPES[4];
+        } else {
+            isArray = f[2] === ALLOWED_FIELDS_TYPES[4];
+        }
 
         if (!isFieldValid(fieldName, fieldType)) { return false; }
 
         result.push({
             name: fieldName,
-            type: fieldType
+            type: fieldType,
+            isArray: isArray,
+            reference: fieldRef
         });
+
         return true;
     });
 
