@@ -1,20 +1,32 @@
 const { modelName } = require({ modelPath });
 
+/**
+ * {controllerName}.js
+ *
+ * @description :: Server-side logic for managing {pluralName}.
+ */
+module.exports = {
 
-module.exports = new class { modelName } {
-    list(req, res) {
-        { modelName }.find({}, (err, { pluralName }) => {
+    /**
+     * {controllerName}.list()
+     */
+    list: function(req, res) {
+        { modelName }.find(function(err, { pluralName }) {
             if (err) {
                 return res.status(500).json({
                     message: 'Error when getting {name}.',
                     error: err
                 });
             }
-            res.status(200).json({ pluralName });
+            return res.json({ pluralName });
         });
-    };
-    show(req, res) {
-        { modelName }.findById(req.params.id, (err, { name }) => {
+    },
+
+    /**
+     * {controllerName}.show()
+     */
+    show: function(req, res) {
+        const id = req.params.id; { modelName }.findOne({ _id: id }, function(err, { name }) {
             if (err) {
                 return res.status(500).json({
                     message: 'Error when getting {name}.',
@@ -26,26 +38,34 @@ module.exports = new class { modelName } {
                     message: 'No such {name}'
                 });
             }
-            res.status(200).json({ name });
+            return res.json({ name });
         });
-    };
-    create(req, res) {
-        let { name } = new { modelName }({
+    },
+
+    /**
+     * {controllerName}.create()
+     */
+    create: function(req, res) {
+        const { name } = new { modelName }({
             { createFields }
         });
 
-        { name }.save((err, { name }) => {
+        { name }.save(function(err, { name }) {
             if (err) {
                 return res.status(500).json({
                     message: 'Error when creating {name}',
                     error: err
                 });
             }
-            res.status(201).json({ name });
+            return res.status(201).json({ name });
         });
-    };
-    update(req, res) {
-        { modelName }.findByIdAndUpdate(req.params.id, { updateFields }, (err, { name }) => {
+    },
+
+    /**
+     * {controllerName}.update()
+     */
+    update: function(req, res) {
+        const id = req.params.id; { modelName }.findOne({ _id: id }, function(err, { name }) {
             if (err) {
                 return res.status(500).json({
                     message: 'Error when getting {name}',
@@ -57,18 +77,32 @@ module.exports = new class { modelName } {
                     message: 'No such {name}'
                 });
             }
-            return res.status(202).json({ name });
+
+            { updateFields } { name }.save(function(err, { name }) {
+                if (err) {
+                    return res.status(500).json({
+                        message: 'Error when updating {name}.',
+                        error: err
+                    });
+                }
+
+                return res.json({ name });
+            });
         });
-    };
-    remove(req, res) {
-        { modelName }.findByIdAndRemove(req.params.id, (err, { name }) => {
+    },
+
+    /**
+     * {controllerName}.remove()
+     */
+    remove: function(req, res) {
+        const id = req.params.id; { modelName }.findByIdAndRemove(id, function(err, { name }) {
             if (err) {
                 return res.status(500).json({
                     message: 'Error when deleting the {name}.',
                     error: err
                 });
             }
-            res.status(204).json();
+            return res.status(204).json();
         });
-    };
+    }
 };
