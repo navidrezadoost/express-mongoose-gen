@@ -1,4 +1,4 @@
-const { modelName } = require({ modelPath });
+var { modelName } = require({ modelPath });
 
 /**
  * {controllerName}.js
@@ -26,7 +26,7 @@ module.exports = {
      * {controllerName}.show()
      */
     show: function(req, res) {
-        const id = req.params.id; { modelName }.findOne({ _id: id }, function(err, { name }) {
+        var id = req.params.id; { modelName }.findOne({ _id: id }, function(err, { name }) {
             if (err) {
                 return res.status(500).json({
                     message: 'Error when getting {name}.',
@@ -46,7 +46,7 @@ module.exports = {
      * {controllerName}.create()
      */
     create: function(req, res) {
-        const { name } = new { modelName }({
+        var { name } = new { modelName }({
             { createFields }
         });
 
@@ -65,7 +65,7 @@ module.exports = {
      * {controllerName}.update()
      */
     update: function(req, res) {
-        const id = req.params.id; { modelName }.findOne({ _id: id }, function(err, { name }) {
+        var id = req.params.id; { modelName }.findOne({ _id: id }, function(err, { name }) {
             if (err) {
                 return res.status(500).json({
                     message: 'Error when getting {name}',
@@ -95,7 +95,7 @@ module.exports = {
      * {controllerName}.remove()
      */
     remove: function(req, res) {
-        const id = req.params.id; { modelName }.findByIdAndRemove(id, function(err, { name }) {
+        var id = req.params.id; { modelName }.findByIdAndRemove(id, function(err, { name }) {
             if (err) {
                 return res.status(500).json({
                     message: 'Error when deleting the {name}.',

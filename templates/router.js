@@ -1,6 +1,6 @@
-const express = require('express');
-const router = express.Router();
-const { controllerName } = require({ controllerPath });
+var express = require('express');
+var router = express.Router();
+var { controllerName } = require({ controllerPath });
 
 /*
  * GET
