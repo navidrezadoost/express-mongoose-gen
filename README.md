@@ -66,7 +66,7 @@ const userSchema = new Schema({
         type: Schema.Types.ObjectId,
         ref: 'User'
     }
-});
+}, {timestamps : true});
 
 module.exports = mongoose.model('user', userSchema);
 ```
@@ -78,30 +78,16 @@ const express = require('express');
 const router = express.Router();
 const userController = require('../controllers/userController.js');
 
-/*
- * GET
- */
-router.get('/', userController.list);
 
-/*
- * GET
- */
-router.get('/:id', userController.show);
+router.get('/', userController.list.bind(userController));
 
-/*
- * POST
- */
-router.post('/', userController.create);
+router.get('/:id', userController.show.bind(userController));
 
-/*
- * PUT
- */
-router.put('/:id', userController.update);
+router.post('/', userController.create.bind(userController));
 
-/*
- * DELETE
- */
-router.delete('/:id', userController.remove);
+router.put('/:id', userController.update.bind(userController));
+
+router.delete('/:id', userController.remove.bind(userController));
 
 module.exports = router;
 
@@ -110,73 +96,87 @@ module.exports = router;
 ### Controller
 controllers/userController.js :
 ```javascript
-const userModel = require('../models/userModel.js');
-
-
-module.exports = new class userController {
-    list(req, res) {
-        userModel.find((err, users) => {
-            if(err) {
-                return res.status(500).json({
-                    message: 'Error getting user.'
-                });
-            }
-             res.status(200).json(users);
-        });
-    };
-    show(req, res) {
-        userModel.findById(req.params.id, (err, user) => {
-            if(err) {
-                return res.status(500).json({
-                    message: 'Error getting user.'
-                });
-            }
-            if(!user) {
-                return res.status(404).json({
-                    message: 'No such user'
-                });
-            }
-             res.status(200).json(user);
-        });
-    };
-    create(req, res) {
-        let user = new userModel({
-			firstName : req.body.firstName,
-			lastName : req.body.lastName
-        });
-
-        user.save()
-            res.status(200).json('user created!')
-    };
-    update(req, res) {
-        userModel.findByIdAndUpdate(req.params.id, {
-user.firstName : req.body.firstName ,
-user.lastName :  req.body.lastName
-        } ,(err, user) => {
-            if(err) {
-                return res.status(500).json({
-                    message: 'Error saving user',
-                    error: err
-                });
-            }
-            if(!user) {
-                return res.status(404).json({
-                    message: 'No such user'
-                });
-            }
-            res.status(200).json('user data updated!')
-        });
-    };
-    remove(req, res) {
-        userModel.findByIdAndDelete(req.params.id, (err, user) => {
-            if(err) {
-                return res.status(500).json({
-                    message: 'Error getting user.'
-                });
-            }
-             res.status(200).json(user);
-        });
-    }
+const userModel = require({modelPath});
+ 
+ 
+module.exports = new class user {
+   list(req , res) {
+       userModel.find({} , (err, user) => {
+           if (err) {
+               return res.status(500).json({
+                   message: 'Error when getting user.',
+                   error: err
+               });
+           }
+           return res.status(200).json(user);
+       });
+   };
+   show(req , res) {
+       userModel.findById(req.params.id,  (err, user) => {
+           if (err) {
+               return res.status(500).json({
+                   message: 'Error when getting user.',
+                   error: err
+               });
+           }
+           if (!user) {
+               return res.status(404).json({
+                   message: 'No such user'
+               });
+           }
+           return res.status(200).json(user);
+       });
+   };
+   create(req , res) {
+       let user = new userModel({{createFields}
+       });
+ 
+       user.save((err, user) =>  {
+           if (err) {
+               return res.status(500).json({
+                   message: 'Error when creating user',
+                   error: err
+               });
+           }
+           return res.status(201).json(user);
+       });
+   };
+   update(req , res) {
+       userModel.findById(req.params.id ,  (err, user) =>  {
+           if (err) {
+               return res.status(500).json({
+                   message: 'Error when getting user',
+                   error: err
+               });
+           }
+           if (!user) {
+               return res.status(404).json({
+                   message: 'No such user'
+               });
+           }
+           {updateFields}
+           user.save((err, user) => {
+               if (err) {
+                   return res.status(500).json({
+                       message: 'Error when updating user.',
+                       error: err
+                   });
+               }
+               return res.json(user);
+           });
+       });
+   };
+   remove(req , res) {
+       userModel.findByIdAndRemove(req.params.id,  (err, user) =>  {
+           if (err) {
+               return res.status(500).json({
+                   message: 'Error when deleting the user.',
+                   error: err
+               });
+           }
+           return res.status(204).json();
+       });
+   };
 };
 ```
 
