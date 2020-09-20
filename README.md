@@ -2,6 +2,11 @@
 # express-mongoose-gen
 
 This package of models receives your database and structures your project with architecture MVC as REST controller and Express router code generator for Express.js 4.0.17 application.
+Full support for type script and defining files as base class
+
+```
+Note that the package must be installed globally on your system
+```
 
 ## Installation
 ```bash
